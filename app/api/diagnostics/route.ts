@@ -4,6 +4,7 @@ import {
   streamText,
   type UIMessage,
 } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
 
 export const maxDuration = 30;
 
@@ -23,32 +24,45 @@ ANALYSIS GUIDELINES:
 2. Compare readings against typical EV operating ranges
 3. Identify trends and correlations between parameters
 4. Predict potential failures before they occur
-5. Provide severity ratings (Normal / Warning / Critical) for any issues found
+5. Provide severity ratings (Normal / Warning / Critical)
 6. Suggest specific maintenance actions with priority levels
-7. Consider the interaction between subsystems (e.g., high current draw causing thermal stress)
+7. Consider subsystem interactions
 
 TYPICAL OPERATING RANGES:
-- System Voltage: 360-410V (nominal 400V for a 96S battery configuration)
+- System Voltage: 360-410V
 - System Current: 0-300A continuous, 400A peak
 - Motor Temperature: 20-60°C normal, >65°C warning, >80°C critical
-- Battery Pack Voltage Balance: <1V deviation normal, >2V warning, >3.5V critical
-- State of Charge: 10-90% optimal operating range
-- Acceleration: -3 to 3 m/s² normal driving
+- Battery Pack Voltage Balance: <1V normal, >2V warning, >3.5V critical
+- State of Charge: 10-90%
+- Acceleration: -3 to 3 m/s²
 
-Format your responses clearly with sections and bullet points. Be concise but thorough.`;
+Format clearly with sections and bullet points.`;
+
+// NVIDIA via OpenAI-compatible AI SDK provider
+const nvidia = createOpenAI({
+  baseURL: process.env.BASE_URL, // https://integrate.api.nvidia.com/v1
+  apiKey: process.env.NVIDIA_TOKEN,
+});
 
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  try {
+    const { messages }: { messages: UIMessage[] } = await req.json();
 
-  const result = streamText({
-    model: "openai/gpt-4o-mini",
-    system: SYSTEM_PROMPT,
-    messages: await convertToModelMessages(messages),
-    abortSignal: req.signal,
-  });
+    const result = streamText({
+      model: nvidia("minimaxai/minimax-m2.7"),
+      system: SYSTEM_PROMPT,
+      messages: await convertToModelMessages(messages),
+      abortSignal: req.signal,
+    });
 
-  return result.toUIMessageStreamResponse({
-    originalMessages: messages,
-    consumeSseStream: consumeStream,
-  });
+    return result.toUIMessageStreamResponse({
+      originalMessages: messages,
+      consumeSseStream: consumeStream,
+    });
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ error: "AI diagnostics failed" }),
+      { status: 500 }
+    );
+  }
 }
