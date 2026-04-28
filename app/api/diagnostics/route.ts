@@ -42,6 +42,8 @@ Format clearly with sections and bullet points.`;
 const nvidia = createOpenAI({
   baseURL: process.env.BASE_URL, // https://integrate.api.nvidia.com/v1
   apiKey: process.env.NVIDIA_TOKEN,
+  compatibility: "strict", // IMPORTANT FIX
+});
 });
 
 export async function POST(req: Request) {
@@ -49,7 +51,7 @@ export async function POST(req: Request) {
     const { messages }: { messages: UIMessage[] } = await req.json();
 
     const result = streamText({
-      model: nvidia("minimaxai/minimax-m2.7"),
+      model: nvidia.chat("minimaxai/minimax-m2.7"),
       system: SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages),
       abortSignal: req.signal,
