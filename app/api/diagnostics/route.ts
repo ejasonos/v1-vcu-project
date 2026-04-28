@@ -61,9 +61,14 @@ export async function POST(req: Request) {
       originalMessages: messages,
       consumeSseStream: consumeStream,
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("FULL ERROR:", error);
+
     return new Response(
-      JSON.stringify({ error: "AI diagnostics failed" }),
+      JSON.stringify({
+        error: error?.message || "AI diagnostics failed",
+        details: error?.responseBody || null,
+    }),
       { status: 500 }
     );
   }
