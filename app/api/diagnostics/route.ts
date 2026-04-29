@@ -6,6 +6,7 @@ import {
 } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 
+export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const SYSTEM_PROMPT = `You are an expert EV (Electric Vehicle) diagnostics AI assistant integrated into a Vehicle Control Unit (VCU) monitoring system. You have deep knowledge of:
@@ -38,11 +39,12 @@ TYPICAL OPERATING RANGES:
 
 Format clearly with sections and bullet points.`;
 
-// NVIDIA via OpenAI-compatible AI SDK provider
+// NVIDIA provider (safe fallback for baseURL)
 const nvidia = createOpenAI({
-  baseURL: process.env.BASE_URL, // https://integrate.api.nvidia.com/v1
+  baseURL:
+    process.env.BASE_URL || "https://integrate.api.nvidia.com/v1",
   apiKey: process.env.NVIDIA_TOKEN,
-  compatibility: "strict" // IMPORTANT FIX
+  compatibility: "strict",
 });
 
 export async function POST(req: Request) {
@@ -50,10 +52,10 @@ export async function POST(req: Request) {
     const { messages }: { messages: UIMessage[] } = await req.json();
 
     const result = streamText({
-      model: nvidia.chat("minimaxai/minimax-m2.7"),
+      model: nvidia("meta/llama3-8b-instruct"), // stable + faster model
       system: SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages),
-      abortSignal: req.signal,
+      abortSignal: AbortSignal.timeout(25000), // prevents Vercel timeout
     });
 
     return result.toUIMessageStreamResponse({
@@ -67,7 +69,7 @@ export async function POST(req: Request) {
       JSON.stringify({
         error: error?.message || "AI diagnostics failed",
         details: error?.responseBody || null,
-    }),
+      }),
       { status: 500 }
     );
   }
