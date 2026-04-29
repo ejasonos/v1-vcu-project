@@ -27,7 +27,7 @@ Format clearly with sections and bullet points.`;
 
 const client = new OpenAI({
   baseURL: "https://integrate.api.nvidia.com/v1",
-  apiKey: process.env.NVIDIA_TOKEN!,
+  apiKey: process.env.NVIDIA_TOKEN,
 });
 
 export async function POST(req: Request) {
