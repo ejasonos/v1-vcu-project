@@ -4,7 +4,7 @@ import {
   streamText,
   type UIMessage,
 } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
+import { createOpenAICompatible } from "@ai-sdk/openai";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -39,10 +39,10 @@ TYPICAL OPERATING RANGES:
 
 Format clearly with sections and bullet points.`;
 
-const nvidia = createOpenAI({
+const nvidia = createOpenAICompatible({
   baseURL: process.env.BASE_URL || "https://integrate.api.nvidia.com/v1",
   apiKey: process.env.NVIDIA_TOKEN,
-  compatibility: "compatible",
+  compatibility: "compatible"
 });
 
 export async function POST(req: Request) {
@@ -55,8 +55,6 @@ export async function POST(req: Request) {
 
       system: SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages),
-
-      // prevents Vercel 30s hang
       abortSignal: AbortSignal.timeout(25000),
     });
 
