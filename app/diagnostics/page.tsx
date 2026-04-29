@@ -157,7 +157,7 @@ export default function DiagnosticsPage() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            className="flex-1 border rounded px-3 py-2 text-sm text-[dark blue]"
+            className="flex-1 border rounded px-3 py-2 text-sm text-[darkblue]"
             placeholder="Ask diagnostics..."
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSend(input);
