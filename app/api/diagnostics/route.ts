@@ -39,12 +39,10 @@ TYPICAL OPERATING RANGES:
 
 Format clearly with sections and bullet points.`;
 
-// NVIDIA provider (safe fallback for baseURL)
 const nvidia = createOpenAI({
-  baseURL:
-    process.env.BASE_URL || "https://integrate.api.nvidia.com/v1",
+  baseURL: process.env.BASE_URL || "https://integrate.api.nvidia.com/v1",
   apiKey: process.env.NVIDIA_TOKEN,
-  compatibility: "strict",
+  compatibility: "compatible",
 });
 
 export async function POST(req: Request) {
@@ -52,10 +50,14 @@ export async function POST(req: Request) {
     const { messages }: { messages: UIMessage[] } = await req.json();
 
     const result = streamText({
-      model: nvidia("meta/llama3-8b-instruct"), // stable + faster model
+      // correct Minimax model usage
+      model: nvidia("minimaxai/minimax-m2.7"),
+
       system: SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages),
-      abortSignal: AbortSignal.timeout(25000), // prevents Vercel timeout
+
+      // prevents Vercel 30s hang
+      abortSignal: AbortSignal.timeout(25000),
     });
 
     return result.toUIMessageStreamResponse({
