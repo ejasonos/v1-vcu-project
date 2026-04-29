@@ -42,7 +42,7 @@ Format clearly with sections and bullet points.`;
 const nvidia = createOpenAI({
   baseURL: process.env.BASE_URL, // https://integrate.api.nvidia.com/v1
   apiKey: process.env.NVIDIA_TOKEN,
-  compatibility: "strict", // IMPORTANT FIX
+  compatibility: "strict" // IMPORTANT FIX
 });
 
 export async function POST(req: Request) {
