@@ -1,10 +1,4 @@
-import {
-  consumeStream,
-  convertToModelMessages,
-  streamText,
-  type UIMessage,
-} from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
+import OpenAI from "openai";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -18,49 +12,53 @@ const SYSTEM_PROMPT = `You are an expert EV (Electric Vehicle) diagnostics AI as
 - SAE J1772, CCS, CHAdeMO charging standards
 - ISO 26262 functional safety standards
 
-When the user asks a question, you will receive real-time telemetry data appended to their message after a "---" separator. Use this data to provide specific, actionable analysis.
+When the user asks a question, you will receive real-time telemetry data appended to their message after a "---" separator.
 
 ANALYSIS GUIDELINES:
-1. Always reference specific values from the telemetry data
-2. Compare readings against typical EV operating ranges
-3. Identify trends and correlations between parameters
-4. Predict potential failures before they occur
-5. Provide severity ratings (Normal / Warning / Critical)
-6. Suggest specific maintenance actions with priority levels
+1. Always reference specific values from telemetry
+2. Compare against EV operating ranges
+3. Identify anomalies and risks
+4. Predict failures early
+5. Provide severity levels (Normal / Warning / Critical)
+6. Suggest maintenance actions
 7. Consider subsystem interactions
-
-TYPICAL OPERATING RANGES:
-- System Voltage: 360-410V
-- System Current: 0-300A continuous, 400A peak
-- Motor Temperature: 20-60°C normal, >65°C warning, >80°C critical
-- Battery Pack Voltage Balance: <1V normal, >2V warning, >3.5V critical
-- State of Charge: 10-90%
-- Acceleration: -3 to 3 m/s²
 
 Format clearly with sections and bullet points.`;
 
-const nvidia = createOpenAI({
-  baseURL: process.env.BASE_URL || "https://integrate.api.nvidia.com/v1",
-  apiKey: process.env.NVIDIA_TOKEN,
-  compatibility: "compatible"
+const client = new OpenAI({
+  baseURL: "https://integrate.api.nvidia.com/v1",
+  apiKey: process.env.NVIDIA_TOKEN!,
 });
 
 export async function POST(req: Request) {
   try {
-    const { messages }: { messages: UIMessage[] } = await req.json();
+    const { messages } = await req.json();
 
-    const result = streamText({
-      // correct Minimax model usage
-      model: nvidia("minimaxai/minimax-m2.7"),
-
-      system: SYSTEM_PROMPT,
-      messages: await convertToModelMessages(messages),
-      abortSignal: AbortSignal.timeout(25000),
+    const response = await client.chat.completions.create({
+      model: "minimaxai/minimax-m2.7",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        ...messages,
+      ],
+      stream: true,
     });
 
-    return result.toUIMessageStreamResponse({
-      originalMessages: messages,
-      consumeSseStream: consumeStream,
+    const encoder = new TextEncoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        for await (const chunk of response) {
+          const text = chunk.choices?.[0]?.delta?.content || "";
+          controller.enqueue(encoder.encode(text));
+        }
+        controller.close();
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+      },
     });
   } catch (error: any) {
     console.error("FULL ERROR:", error);
@@ -68,7 +66,6 @@ export async function POST(req: Request) {
     return new Response(
       JSON.stringify({
         error: error?.message || "AI diagnostics failed",
-        details: error?.responseBody || null,
       }),
       { status: 500 }
     );
