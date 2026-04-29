@@ -4,7 +4,7 @@ import {
   streamText,
   type UIMessage,
 } from "ai";
-import { createOpenAICompatible } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -39,7 +39,7 @@ TYPICAL OPERATING RANGES:
 
 Format clearly with sections and bullet points.`;
 
-const nvidia = createOpenAICompatible({
+const nvidia = createOpenAI({
   baseURL: process.env.BASE_URL || "https://integrate.api.nvidia.com/v1",
   apiKey: process.env.NVIDIA_TOKEN,
   compatibility: "compatible"
