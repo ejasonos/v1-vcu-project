@@ -44,7 +44,6 @@ const nvidia = createOpenAI({
   apiKey: process.env.NVIDIA_TOKEN,
   compatibility: "strict", // IMPORTANT FIX
 });
-});
 
 export async function POST(req: Request) {
   try {
