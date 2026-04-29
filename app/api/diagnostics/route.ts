@@ -40,7 +40,7 @@ export async function POST(req: Request) {
         { role: "system", content: SYSTEM_PROMPT },
         ...messages,
       ],
-      stream: true,
+      stream: false,
     });
 
     const encoder = new TextEncoder();
@@ -55,11 +55,9 @@ export async function POST(req: Request) {
       },
     });
 
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-      },
-    });
+    return new Response(JSON.stringify({
+  text: response.choices[0].message.content
+}));
   } catch (error: any) {
     console.error("FULL ERROR:", error);
 
