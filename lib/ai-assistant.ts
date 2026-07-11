@@ -9,7 +9,8 @@ const openai = new OpenAI({
   baseURL: process.env.NEXT_PUBLIC_OPENAI_BASE_URL
 })
 const messages: { role: 'system' | 'user', content: string }[] = [
-  { role: 'system', content: 'You are a helpful assistant that provides information about the Electric Vehicle Control Unit (VCU) based on the provided state data.' }
+  { role: 'system', content: 'You are a helpful assistant that provides information about the Electric Vehicle Control Unit (VCU) based on the provided state data.' },
+  { role: 'system', content: 'Answer all questions using Markdown format only. Use headings, bullet lists, bold text, inline code, and short paragraphs. Do not output HTML.' }
 ]
 
 function buildVCUStateContext(vcuState: Partial<VCUState>): string {
@@ -49,7 +50,7 @@ function buildVCUStateContext(vcuState: Partial<VCUState>): string {
 }
 
 export async function generateAIResponse(userMessage: string, vcuState: Partial<VCUState>): Promise<string> {
-  const prompt = userMessage.toLocaleLowerCase();
+  const prompt = userMessage.trim();
   const stateContext = buildVCUStateContext(vcuState)
 
   const response = await openai.chat.completions.create({

@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useVCUStore } from '@/store/vcu-store';
 import { calculateHealthScore } from '@/lib/health-score';
 import { generateAIResponse } from '@/lib/ai-assistant';
@@ -44,16 +46,27 @@ export default function AIAssistantPage() {
     setIsLoading(true);
 
     // Generate AI response
-    setTimeout(() => {
-      const response = generateAIResponse(userInput, vcuStore);
-      const aiMsg = {
-        id: `msg-${Date.now()}-ai`,
-        role: 'assistant' as const,
-        content: response,
-        timestamp: Date.now(),
-      };
-      vcuStore.addChatMessage(aiMsg);
-      setIsLoading(false);
+    setTimeout(async () => {
+      try {
+        const response = await generateAIResponse(userInput, vcuStore);
+        const aiMsg = {
+          id: `msg-${Date.now()}-ai`,
+          role: 'assistant' as const,
+          content: response,
+          timestamp: Date.now(),
+        };
+        vcuStore.addChatMessage(aiMsg);
+      } catch (error) {
+        const errorMsg = {
+          id: `msg-${Date.now()}-ai`,
+          role: 'assistant' as const,
+          content: 'Sorry, I could not generate a response right now.',
+          timestamp: Date.now(),
+        };
+        vcuStore.addChatMessage(errorMsg);
+      } finally {
+        setIsLoading(false);
+      }
     }, 300);
   };
 
@@ -94,7 +107,13 @@ export default function AIAssistantPage() {
                             : 'bg-secondary text-foreground border border-border'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                        {msg.role === 'assistant' ? (
+                          <div className="text-sm whitespace-pre-wrap break-words">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                        )}
                         <p className="text-xs opacity-70 mt-1">
                           {new Date(msg.timestamp).toLocaleTimeString([], {
                             hour: '2-digit',

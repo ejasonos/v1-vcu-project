@@ -26,7 +26,7 @@ export const Navbar: React.FC = () => {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-blue to-blue-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">VCU</span>
+              <img src='/icon.jpeg' className="h-8 w-8 rounded-md" />
             </div>
             <span className="text-lg font-bold text-foreground hidden sm:inline">VCU-Software</span>
           </Link>

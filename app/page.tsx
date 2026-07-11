@@ -100,8 +100,10 @@ export default function HomePage() {
               </div>
               <div className="flex-1 text-center">
                 <div className="inline-block">
-                  <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-accent-blue to-blue-600 flex items-center justify-center mb-4">
-                    <span className="text-3xl font-bold text-white">VCU</span>
+                  <div className="w-50 h-50 rounded-lg bg-gradient-to-br from-accent-blue to-blue-600 flex items-center justify-center mb-4">
+                    <div className="rounded-lg">
+                      <img src="/icon.jpeg" alt="VCU Icon" className="rounded-lg w-full h-full object-contain" />
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground">Vehicle Control Unit</p>
                 </div>

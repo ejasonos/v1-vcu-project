@@ -6,23 +6,19 @@ import { Navbar } from '@/components/layout/Navbar';
 export const metadata: Metadata = {
   title: 'VCU-Software - Electric Vehicle Control Unit Monitor',
   description: 'Professional monitoring, configuration, and health prediction for EV Vehicle Control Units',
-  generator: 'v0.app',
+  generator: 'Favour Ejakpevweoghene Onosemuode',
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
+        url: '/icon.jpeg',
         media: '(prefers-color-scheme: light)',
       },
       {
-        url: '/icon-dark-32x32.png',
+        url: '/icon.jpeg',
         media: '(prefers-color-scheme: dark)',
       },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
     ],
-    apple: '/apple-icon.png',
+    apple: '/icon.jpeg',
   },
 };
 
