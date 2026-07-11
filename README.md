@@ -1,353 +1,107 @@
 # VCU-Software
 
-A modern web-based **Vehicle Control Unit (VCU)** monitoring, configuration, and intelligent diagnostics platform built for Electric Vehicles (EVs).
+A Next.js application for Electric Vehicle Vehicle Control Unit (VCU) monitoring, configuration, diagnostics, and AI-assisted insights.
 
-VCU-Software provides engineers, researchers, and students with an interactive dashboard for monitoring live VCU parameters, configuring controller settings, visualizing vehicle performance, and using an AI-powered assistant to predict potential faults before they become critical.
+This project provides an interactive VCU dashboard with:
+- live telemetry monitoring
+- configuration controls
+- system annunciators
+- a simulation mode for testing
+- an AI assistant powered by the OpenAI SDK
 
-This project was developed as part of a final year research project focused on **AI-assisted predictive health monitoring for Electric Vehicle Vehicle Control Units**.
+## Key Features
 
----
-
-## Features
-
-### Real-Time Monitoring
-
-Monitor critical VCU parameters in real time.
-
-- Motor Running Status
-- Fault Status
-- Connection Status
-- Operating Time
-- Warning State
-- Motor Temperature
-- Inverter Temperature
-- Requested Torque
-- Actual Torque
-- DC Voltage
-- DC Current
-- Power
-- Throttle Position
-- Brake Position
-- RPM
-- Battery Voltage
-- Health Score
-- System Prediction
-
----
-
-### Engineering Dashboard
-
-A modern engineering dashboard displaying:
-
-- Animated Torque Gauge
-- Current Gauge
-- RPM Gauge
-- Motor Temperature Gauge
-- Inverter Temperature Gauge
-- Voltage Gauge
-- Battery Health Gauge
-- Power Gauge
-
-Live graphs for:
-
-- Motor Temperature
-- Inverter Temperature
-- Voltage
-- Current
-- Torque
-- Power
-- RPM
-- Throttle Position
-
----
-
-### Configuration Panel
-
-Configure VCU operating parameters including:
-
-#### Throttle
-
-- Number of Throttle Pots
-- Minimum Signal Level 1
-- Maximum Signal Level 1
-- Minimum Signal Level 2
-- Maximum Signal Level 2
-- Creep Level
-- Throttle Type
-- Pedal Position Regen Maximum
-- Pedal Position Regen Minimum
-- Forward Motion Start
-- 50% Throttle Position
-- Minimum Throttle Range
-- Maximum Throttle Range
-
-Interactive throttle mapping graph showing:
-
-- Regenerative braking region
-- Neutral region
-- Forward power region
-
----
-
-#### Brake
-
-- Minimum Signal Level
-- Maximum Signal Level
-- Minimum Brake Regen
-- Maximum Brake Regen
-
----
-
-#### Motor Control
-
-- Maximum Speed
-- Maximum Torque
-
----
-
-#### System Configuration
-
-- Battery Voltage
-- Log Level
-- Precharge Relay Output
-- Precharge Delay
-- Cooling Fan Relay Output
-- Main Contactor Relay Output
-- Cooling Fan ON Temperature
-- Cooling Fan OFF Temperature
-- Brake Light Output
-
----
-
-### Annunciator Panel
-
-Displays the health of important vehicle systems.
-
-Includes indicators for:
-
-- Precharge Relay
-- Main Contactor
-- Running
-- Reverse
-- Motor Overtemperature
-- Throttle Fault
-- Brake Fault
-- Inverter Fault
-- Battery Low
-- Cooling Fan Active
-- Emergency Stop
-- CAN Bus Fault
-- Communication Fault
-- High Voltage Active
-- Low Voltage Fault
-- Controller Ready
-
-Each annunciator automatically changes colour based on system status.
-
----
-
-### AI Assistant
-
-The AI Assistant continuously monitors every VCU parameter and provides intelligent insights.
-
-Capabilities include:
-
-- Predictive fault detection
-- Health score calculation
-- Failure risk estimation
-- Maintenance recommendations
-- Live diagnostic explanations
-- Engineering troubleshooting assistance
-
-Users can ask questions such as:
-
-- Why is motor temperature increasing?
-- Why is torque dropping?
-- Why is battery voltage unstable?
-- Predict motor health.
-- Predict battery health.
-- Explain active faults.
-- Recommend maintenance.
-
----
-
-### Predictive Health Monitoring
-
-The prediction engine continuously evaluates:
-
-- Motor Temperature
-- Inverter Temperature
-- Battery Voltage
-- DC Current
-- Torque Difference
-- RPM
-- Power
-- Cooling System
-- Annunciator States
-- Communication Status
-
-The engine calculates:
-
-- Health Score (0–100)
-- Health Status
-- Failure Risk
-- Confidence Score
-- Active Alerts
-- Maintenance Recommendations
-
----
-
-### Simulation Mode
-
-The application includes a built-in simulator for demonstration purposes.
-
-Simulation updates include:
-
-- Motor Temperature
-- Inverter Temperature
-- Voltage
-- Current
-- Torque
-- RPM
-- Power
-- Throttle
-- Brake
-- Battery Voltage
-- Annunciators
-- AI Predictions
-
-This allows the entire application to function without requiring physical VCU hardware.
-
----
-
-## Technology Stack
-
-- Next.js 15
-- React 19
-- TypeScript
-- TailwindCSS
-- Zustand
-- React Hook Form
-- Zod
-- Recharts
-- Framer Motion
-- Lucide React
-- Heroicons
-
----
-
-## Project Structure
-
-```
-app/
-│
-├── status/
-├── dashboard/
-├── configuration/
-├── ai-assistant/
-│
-components/
-├── ai/
-├── charts/
-├── forms/
-├── gauges/
-├── indicators/
-└── ui/
-│
-store/
-└── vcu-store.ts
-│
-lib/
-├── health-score.ts
-├── prediction-engine.ts
-└── simulation.ts
-│
-hooks/
-│
-types/
-│
-utils/
-```
-
----
+- Home page with simulation controls for throttle, brake, and failure modes
+- Status page with live VCU health, annunciators, motor control, temperature, and prediction sections
+- Dashboard page with gauges and live charts for key telemetry
+- Configuration page for throttle, brake, motor control, and system settings
+- AI Assistant chat page that uses current VCU state to answer user questions
+- Zustand state store for shared VCU data across all pages
 
 ## Pages
 
-### Status
+- `/` — Home page with simulation controls and quick navigation
+- `/status` — VCU status monitor with health score, annunciators, and diagnostics
+- `/dashboard` — Engineering dashboard with live gauges and charts
+- `/configuration` — Controller and system settings page
+- `/ai-assistant` — AI-powered chat assistant for VCU diagnostics
 
-Displays live operating information.
+## Setup
 
-Includes:
+1. Install dependencies:
 
-- Motor Control
-- Throttle / Brake
-- Annunciators
-- Health Score
-- System Prediction
+   ```bash
+   pnpm install
+   ```
 
----
+2. Run the app in development:
 
-### Dashboard
+   ```bash
+   pnpm dev
+   ```
 
-Engineering visualization page containing:
+3. Build for production:
 
-- Gauges
-- Live Charts
-- Battery Health
-- Performance Metrics
+   ```bash
+   pnpm build
+   ```
 
----
+4. Start the production app:
 
-### Configuration
+   ```bash
+   pnpm start
+   ```
 
-Allows modification of controller settings.
+## Environment
 
-All changes update the global application state immediately.
+The OpenAI SDK in `lib/ai-assistant.ts` reads the following environment variables:
 
----
+- `NEXT_PUBLIC_OPENAI_API_KEY`
+- `NEXT_PUBLIC_OPENAI_BASE_URL`
 
-### AI Assistant
+If you do not use OpenAI, the app still includes fallback logic for hardcoded diagnostics.
 
-Provides intelligent monitoring and predictive diagnostics using a rule-based prediction engine.
+## Scripts
 
----
+- `pnpm dev` — start the Next.js development server
+- `pnpm build` — build the production app
+- `pnpm start` — run the production build
+- `pnpm lint` — run ESLint across the project
 
-## State Management
+## Tech Stack
 
-The application uses **Zustand** for centralized state management.
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS
+- Zustand
+- Recharts
+- Framer Motion
+- OpenAI SDK
 
-All pages consume the same global store, ensuring:
+## Project Structure
 
-- Real-time synchronization
-- No duplicated state
-- Reactive UI updates
-- Consistent simulation behavior
+- `app/` — Next.js routes and page components
+- `components/` — reusable UI elements, gauges, charts, and indicators
+- `lib/` — VCU simulation, AI assistant, and utility logic
+- `store/` — global Zustand VCU state management
+- `types/` — shared TypeScript types
+- `public/` — static assets
 
----
+## VCU Features
 
-## Prediction Engine
+- Live telemetry values: motor temperature, inverter temperature, DC voltage, current, torque, power, RPM, throttle, brake
+- Annunciator panel for system states such as precharge, contactor, running, reverse, faults, cooling fan, emergency stop, and communication status
+- Health scoring and predictive alert generation
+- Configurable throttle, brake, motor control, and system parameters
+- Built-in simulation mode so the UI can operate without actual hardware
 
-The prediction engine evaluates operating conditions using deterministic engineering rules.
+## Notes
 
-Example rules include:
+- The app is built for `pnpm` package management.
+- The current route structure uses `app/` routing with React Server Components and client components where needed.
+- The AI chat assistant leverages live VCU state from the global store when generating responses.
 
-- High motor temperature
-- High inverter temperature
-- Excessive current draw
-- Battery voltage instability
-- Cooling system faults
-- Torque mismatch
-- Communication failures
-- Multiple simultaneous faults
-
-Outputs include:
-
-- Health Score
-- Health Status
-- Active Alerts
-- Recommended Maintenance
-- Failure Probability
-- Confidence Percentage
 
 ---
 
