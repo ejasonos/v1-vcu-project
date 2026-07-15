@@ -61,12 +61,15 @@ export async function generateAIResponse(userMessage: string, vcuState: Partial<
       { role: 'user', content: prompt }
     ]
   })
+  console.log('Checkpoint 0')
   if (response && response.choices?.[0]?.message?.content) {
     messages.push({ role: 'user', content: prompt })
     messages.push({ role: 'system', content: response.choices[0].message.content })
+    console.log('Checkpoint 1')
     return response.choices[0].message.content
   } else {
     const lowerMessage = userMessage.toLowerCase();
+    console.log('Checkpoint 3')
 
     // Health and prediction queries
     if (
