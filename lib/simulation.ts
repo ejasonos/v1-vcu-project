@@ -1,167 +1,170 @@
-import type { VCUState } from '@/store/vcu-store';
-import type { AnnunciatorState } from '@/types';
+import type { SimulationData, FailureMode } from '@/types';
 
 export interface SimulationState {
   motorRunning: boolean;
   throttleTarget: number;
   brakeTarget: number;
-  rpmTarget: number;
-  failureMode: 'none' | 'high-temp' | 'high-current' | 'low-voltage' | 'sensor-fault';
+  motorSpeedTarget: number;
+  failureMode: FailureMode;
+  timeElapsed: number;
 }
 
 const simState: SimulationState = {
   motorRunning: false,
   throttleTarget: 0,
   brakeTarget: 0,
-  rpmTarget: 0,
-  failureMode: 'none',
+  motorSpeedTarget: 0,
+  failureMode: 'Normal',
+  timeElapsed: 0,
 };
 
 export function initializeSimulation() {
   simState.motorRunning = false;
   simState.throttleTarget = 0;
   simState.brakeTarget = 0;
-  simState.rpmTarget = 0;
-  simState.failureMode = 'none';
+  simState.motorSpeedTarget = 0;
+  simState.failureMode = 'Normal';
+  simState.timeElapsed = 0;
 }
 
 export function updateSimulationTargets(throttle: number, brake: number) {
   simState.throttleTarget = Math.max(0, Math.min(100, throttle));
   simState.brakeTarget = Math.max(0, Math.min(100, brake));
 
+  // Motor running logic
   if (throttle > 5) {
     simState.motorRunning = true;
-    simState.rpmTarget = (throttle / 100) * 8000;
+    simState.motorSpeedTarget = (throttle / 100) * 8000;
   } else if (brake > 10) {
-    simState.rpmTarget = Math.max(0, simState.rpmTarget - 200);
+    simState.motorSpeedTarget = Math.max(0, simState.motorSpeedTarget - 300);
   }
 
   if (throttle < 2 && brake < 2) {
-    if (simState.rpmTarget < 100) {
+    if (simState.motorSpeedTarget < 100) {
       simState.motorRunning = false;
     }
   }
 }
 
-export function setSimulationFailureMode(mode: SimulationState['failureMode']) {
+export function setSimulationFailureMode(mode: FailureMode) {
   simState.failureMode = mode;
 }
 
-export function simulateVCUUpdate(currentState: Partial<VCUState>): Partial<VCUState> {
-  const updates: Partial<VCUState> = {};
+export function simulateVCUUpdate(currentData: SimulationData): SimulationData {
+  const newData = { ...currentData };
 
-  // Smoothly update throttle and brake
-  const currentThrottle = currentState.throttleLevel || 0;
-  const currentBrake = currentState.brakeLevel || 0;
+  // Increment time
+  simState.timeElapsed += 1;
 
-  updates.throttleLevel = currentThrottle + (simState.throttleTarget - currentThrottle) * 0.2;
-  updates.brakeLevel = currentBrake + (simState.brakeTarget - currentBrake) * 0.2;
+  // Update throttle and brake positions smoothly
+  newData.throttlePosition =
+    currentData.throttlePosition + (simState.throttleTarget - currentData.throttlePosition) * 0.2;
+  newData.brakePosition =
+    currentData.brakePosition + (simState.brakeTarget - currentData.brakePosition) * 0.2;
 
-  // Update RPM
-  const currentRpm = currentState.rpm || 0;
-  updates.rpm = currentRpm + (simState.rpmTarget - currentRpm) * 0.1;
+  // Update motor speed
+  newData.motorSpeed =
+    currentData.motorSpeed + (simState.motorSpeedTarget - currentData.motorSpeed) * 0.1;
 
-  // Torque is proportional to throttle
-  updates.requestedTorque = (updates.throttleLevel! / 100) * (currentState.maximumTorque || 300);
-  updates.actualTorque = updates.requestedTorque * (0.95 + Math.random() * 0.1);
+  // Vehicle speed proportional to motor speed (simplified)
+  newData.vehicleSpeed = (newData.motorSpeed / 8000) * 200;
 
-  // DC Current based on torque and throttle
-  const baseCurrentPerTorque = 1.2;
-  updates.dcCurrent =
-    Math.abs(updates.actualTorque!) * baseCurrentPerTorque + Math.random() * 10 - 5;
+  // Battery discharge based on throttle
+  const drainRate = (simState.throttleTarget / 100) * 0.5; // 0.5% max per second
+  newData.batterySoc = Math.max(0, currentData.batterySoc - drainRate);
 
-  // Power calculation (kW)
-  updates.power = (updates.dcCurrent! * (currentState.dcVoltage || 400)) / 1000;
-
-  // Motor temperature simulation
-  const currentMotorTemp = currentState.motorTemperature || 45;
-  const tempIncrease = (updates.power! / 100) * 0.5;
-  const tempDecrease = 0.1;
-  const newMotorTemp = currentMotorTemp + tempIncrease - tempDecrease + (Math.random() - 0.5) * 2;
-  updates.motorTemperature = Math.max(20, newMotorTemp);
-
-  // Inverter temperature simulation
-  const currentInverterTemp = currentState.inverterTemperature || 35;
-  const inverterTempIncrease = (updates.power! / 150) * 0.3;
-  const newInverterTemp = currentInverterTemp + inverterTempIncrease - 0.05 + (Math.random() - 0.5) * 1;
-  updates.inverterTemperature = Math.max(20, newInverterTemp);
-
-  // Operating time
-  if (simState.motorRunning) {
-    updates.operatingTime = (currentState.operatingTime || 0) + 1;
+  // Battery charging if not moving
+  if (simState.throttleTarget < 5 && simState.brakeTarget < 5) {
+    if (newData.chargingStatus === 'Charging') {
+      newData.batterySoc = Math.min(100, currentData.batterySoc + 0.2);
+    }
   }
 
-  // Voltage fluctuation
-  const baseVoltage = 400;
-  updates.dcVoltage =
-    baseVoltage + (Math.random() - 0.5) * 10 - (updates.dcCurrent! / 500) * 20;
+  // Motor temperature increases with load, decreases over time
+  const loadFactor = simState.throttleTarget / 100;
+  const tempIncrease = loadFactor * 0.3;
+  const tempDecrease = 0.05;
+  newData.motorTemperature =
+    Math.max(25, currentData.motorTemperature + tempIncrease - tempDecrease) +
+    (Math.random() - 0.5) * 0.5;
 
-  // Battery voltage correlation
-  updates.batteryVoltage = updates.dcVoltage;
+  // Battery temperature increases with discharge, affected by motor temp
+  const batteryLoadFactor = drainRate / 0.5;
+  const batteryTempIncrease = batteryLoadFactor * 0.2 + (newData.motorTemperature - 25) * 0.01;
+  const batteryTempDecrease = 0.02;
+  newData.batteryTemperature = Math.max(20, currentData.batteryTemperature + batteryTempIncrease - batteryTempDecrease) + (Math.random() - 0.5) * 0.3;
 
-  // Motor running state
-  updates.motorRunning = simState.motorRunning && updates.rpm! > 50;
+  // Battery health degrades slowly
+  newData.batteryHealth = Math.max(0, currentData.batteryHealth - 0.001);
 
-  // Failure modes
-  const updates_annunciators = currentState.annunciators ? { ...currentState.annunciators } : {};
+  // Determine system status based on conditions
+  let systemStatus = 'Normal' as const;
+  let faultStatus = null as string | null;
 
-  if (simState.failureMode === 'high-temp') {
-    updates.motorTemperature = Math.min(130, updates.motorTemperature + 2);
-    updates_annunciators.motorOvertemperature = 'critical';
-    updates_annunciators.coolingFanActive = 'warning';
+  // Apply failure modes
+  if (simState.failureMode === 'HighTemperature') {
+    newData.motorTemperature = Math.min(150, newData.motorTemperature + 2);
+    systemStatus = 'Warning';
+    faultStatus = 'High Motor Temperature';
+  }
+
+  if (simState.failureMode === 'LowBattery') {
+    newData.batterySoc = Math.max(0, newData.batterySoc - 2);
+    if (newData.batterySoc < 20) {
+      systemStatus = 'Fault';
+      faultStatus = 'Battery Critically Low';
+    } else {
+      systemStatus = 'Warning';
+      faultStatus = 'Low Battery';
+    }
+  }
+
+  if (simState.failureMode === 'HighCurrent') {
+    // Simulate high current draw
+    newData.batterySoc = Math.max(0, newData.batterySoc - 1);
+    systemStatus = 'Warning';
+    faultStatus = 'High Current Draw';
+  }
+
+  if (simState.failureMode === 'SensorFault') {
+    systemStatus = 'Warning';
+    faultStatus = 'Sensor Fault Detected';
+  }
+
+  // Temperature-based warnings
+  if (newData.motorTemperature > 120) {
+    systemStatus = 'Fault';
+    faultStatus = 'Motor Overtemperature';
+  } else if (newData.motorTemperature > 100) {
+    if (systemStatus !== 'Fault') systemStatus = 'Warning';
+    if (!faultStatus) faultStatus = 'High Motor Temperature';
+  }
+
+  // Battery temperature warnings
+  if (newData.batteryTemperature > 60) {
+    if (systemStatus !== 'Fault') systemStatus = 'Warning';
+    if (!faultStatus) faultStatus = 'High Battery Temperature';
+  }
+
+  // Battery health warnings
+  if (newData.batteryHealth < 20) {
+    if (systemStatus !== 'Fault') systemStatus = 'Warning';
+    if (!faultStatus) faultStatus = 'Battery Health Degraded';
+  }
+
+  newData.systemStatus = systemStatus;
+  newData.faultStatus = faultStatus;
+
+  // Determine charging status
+  if (newData.motorSpeed < 50 && newData.brakePosition > 80) {
+    newData.chargingStatus = 'Charging';
+  } else if (newData.motorSpeed > 0) {
+    newData.chargingStatus = 'Discharging';
   } else {
-    updates_annunciators.motorOvertemperature = updates.motorTemperature! > 110 ? 'critical' : 'off';
-    updates_annunciators.coolingFanActive =
-      updates.motorTemperature! > 80 ? 'warning' : 'off';
+    newData.chargingStatus = 'Not Charging';
   }
 
-  if (simState.failureMode === 'high-current') {
-    updates.dcCurrent = Math.min(550, updates.dcCurrent! + 20);
-    updates_annunciators.inverterFault = 'warning';
-  } else {
-    updates_annunciators.inverterFault = updates.dcCurrent! > 500 ? 'critical' : 'off';
-  }
-
-  if (simState.failureMode === 'low-voltage') {
-    updates.batteryVoltage = Math.max(250, updates.batteryVoltage! - 10);
-    updates.dcVoltage = updates.batteryVoltage;
-    updates_annunciators.batteryLow = 'critical';
-    updates_annunciators.lowVoltageFault = 'critical';
-  } else {
-    updates_annunciators.batteryLow = updates.batteryVoltage! < 300 ? 'critical' : 'off';
-    updates_annunciators.lowVoltageFault = updates.dcVoltage! < 300 ? 'critical' : 'off';
-  }
-
-  if (simState.failureMode === 'sensor-fault') {
-    updates_annunciators.throttleFault = 'warning';
-    updates_annunciators.communicationFault = Math.random() > 0.7 ? 'warning' : 'off';
-  } else {
-    updates_annunciators.throttleFault = 'off';
-    updates_annunciators.communicationFault = 'off';
-  }
-
-  // Set normal operational annunciators
-  updates_annunciators.running = simState.motorRunning ? 'warning' : 'off';
-  updates_annunciators.mainContactor = simState.motorRunning ? 'warning' : 'off';
-  updates_annunciators.prechargRelay = simState.motorRunning ? 'warning' : 'off';
-  updates_annunciators.highVoltageActive = simState.motorRunning ? 'warning' : 'off';
-  updates_annunciators.controllerReady = 'warning';
-  updates_annunciators.reverse = 'off';
-  updates_annunciators.brakeFault = 'off';
-  updates_annunciators.emergencyStop = 'off';
-  updates_annunciators.canBusFault = 'off';
-
-  updates.annunciators = updates_annunciators;
-
-  // Probabilistic fault generation
-  if (Math.random() < 0.02) {
-    updates.warnings = [
-      ...(currentState.warnings || []),
-      `Transient fault at ${new Date().toLocaleTimeString()}`,
-    ].slice(-5);
-  }
-
-  return updates;
+  return newData;
 }
 
 export function getSimulationState(): SimulationState {

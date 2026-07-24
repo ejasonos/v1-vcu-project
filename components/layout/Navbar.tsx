@@ -11,7 +11,7 @@ export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { label: 'Status', href: '/status' },
+    { label: 'Simulation', href: '/simulation' },
     { label: 'Dashboard', href: '/dashboard' },
     { label: 'Configuration', href: '/configuration' },
     { label: 'AI Assistant', href: '/ai-assistant' },
@@ -26,7 +26,7 @@ export const Navbar: React.FC = () => {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-blue to-blue-600 flex items-center justify-center">
-              <img src='/icon.jpeg' className="h-8 w-8 rounded-md" />
+              <span className="text-white font-bold text-sm">VCU</span>
             </div>
             <span className="text-lg font-bold text-foreground hidden sm:inline">VCU-Software</span>
           </Link>

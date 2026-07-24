@@ -3,230 +3,199 @@
 import React, { useMemo } from 'react';
 import { useVCUStore } from '@/store/vcu-store';
 import { Card } from '@/components/ui/Card';
-import { Gauge } from '@/components/gauges/Gauge';
 import { ChartCard } from '@/components/charts/ChartCard';
+import { motion } from 'framer-motion';
 
 export default function DashboardPage() {
-  const vcuState = useVCUStore();
+  const store = useVCUStore();
 
   // Format chart data
   const chartData = useMemo(() => {
-    return vcuState.healthMetrics.map((metric, idx) => ({
+    return store.metrics.map((metric) => ({
       time: new Date(metric.timestamp).toLocaleTimeString([], {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
       }),
-      motorTemp: metric.motorTemp,
-      inverterTemp: metric.inverterTemp,
-      voltage: metric.voltage,
-      current: metric.current,
-      torque: metric.torque,
-      power: metric.power,
-      throttle: metric.throttle,
-      rpm: metric.rpm,
+      batterySoc: metric.batterySoc,
+      batteryTemp: metric.batteryTemperature,
+      motorSpeed: metric.motorSpeed,
+      motorTemp: metric.motorTemperature,
     }));
-  }, [vcuState.healthMetrics]);
+  }, [store.metrics]);
+
+  const getStatusColor = (status: string) => {
+    if (status === 'Normal') return 'text-green-400';
+    if (status === 'Warning') return 'text-yellow-400';
+    return 'text-red-500';
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Engineering Dashboard</h1>
-          <p className="text-muted-foreground">Real-time gauges and performance monitoring</p>
-        </div>
+    <div className="min-h-screen bg-background py-12">
+      <div className="max-w-6xl mx-auto px-4">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-4xl font-bold text-foreground mb-2">Vehicle Dashboard</h1>
+          <p className="text-muted-foreground mb-8">Real-time monitoring of simulated vehicle parameters</p>
+        </motion.div>
 
-        {/* Large Gauges */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          <Card className="flex items-center justify-center py-8">
-            <Gauge
-              value={vcuState.actualTorque}
-              min={-100}
-              max={300}
-              unit="Nm"
-              label="Torque Output"
-              size="large"
-              showValue={true}
-            />
-          </Card>
-          <Card className="flex items-center justify-center py-8">
-            <Gauge
-              value={vcuState.dcCurrent}
-              min={-100}
-              max={500}
-              unit="A"
-              label="DC Current"
-              size="large"
-              showValue={true}
-            />
-          </Card>
-        </div>
-
-        {/* Small Gauges Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="flex items-center justify-center py-4">
-            <Gauge
-              value={vcuState.throttleLevel}
-              min={0}
-              max={100}
-              unit="%"
-              label="Throttle"
-              size="small"
-              showValue={true}
-            />
-          </Card>
-          <Card className="flex items-center justify-center py-4">
-            <Gauge
-              value={vcuState.rpm}
-              min={0}
-              max={10000}
-              unit="RPM"
-              label="Speed"
-              size="small"
-              showValue={true}
-            />
-          </Card>
-          <Card className="flex items-center justify-center py-4">
-            <Gauge
-              value={vcuState.motorTemperature}
-              min={0}
-              max={250}
-              unit="°C"
-              label="Motor Temp"
-              size="small"
-              showValue={true}
-            />
-          </Card>
-          <Card className="flex items-center justify-center py-4">
-            <Gauge
-              value={vcuState.inverterTemperature}
-              min={0}
-              max={250}
-              unit="°C"
-              label="Inverter Temp"
-              size="small"
-              showValue={true}
-            />
-          </Card>
-          <Card className="flex items-center justify-center py-4">
-            <Gauge
-              value={vcuState.dcVoltage}
-              min={0}
-              max={500}
-              unit="V"
-              label="DC Voltage"
-              size="small"
-              showValue={true}
-            />
-          </Card>
-          <Card className="flex items-center justify-center py-4">
-            <Gauge
-              value={vcuState.healthScore}
-              min={0}
-              max={100}
-              unit="%"
-              label="Health"
-              size="small"
-              showValue={true}
-            />
-          </Card>
-          <Card className="flex items-center justify-center py-4">
-            <Gauge
-              value={vcuState.power}
-              min={0}
-              max={150}
-              unit="kW"
-              label="Power"
-              size="small"
-              showValue={true}
-            />
-          </Card>
-          <Card className="flex items-center justify-center py-4">
-            <Gauge
-              value={vcuState.brakeLevel}
-              min={0}
-              max={100}
-              unit="%"
-              label="Brake"
-              size="small"
-              showValue={true}
-            />
-          </Card>
-        </div>
-
-        {/* Live Charts */}
-        <div>
-          <h2 className="text-2xl font-bold text-foreground mb-4">Live Data Trends</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {chartData.length > 1 ? (
-              <>
-                <ChartCard
-                  title="Motor Temperature (°C)"
-                  data={chartData}
-                  dataKey="motorTemp"
-                  color="#f59e0b"
-                  height={250}
-                />
-                <ChartCard
-                  title="Inverter Temperature (°C)"
-                  data={chartData}
-                  dataKey="inverterTemp"
-                  color="#f59e0b"
-                  height={250}
-                />
-                <ChartCard
-                  title="Voltage (V)"
-                  data={chartData}
-                  dataKey="voltage"
-                  color="#3b82f6"
-                  height={250}
-                />
-                <ChartCard
-                  title="Current (A)"
-                  data={chartData}
-                  dataKey="current"
-                  color="#ef4444"
-                  height={250}
-                />
-                <ChartCard
-                  title="Torque (Nm)"
-                  data={chartData}
-                  dataKey="torque"
-                  color="#10b981"
-                  height={250}
-                />
-                <ChartCard
-                  title="Power (kW)"
-                  data={chartData}
-                  dataKey="power"
-                  color="#8b5cf6"
-                  height={250}
-                />
-                <ChartCard
-                  title="Throttle (%)"
-                  data={chartData}
-                  dataKey="throttle"
-                  color="#06b6d4"
-                  height={250}
-                />
-                <ChartCard
-                  title="RPM"
-                  data={chartData}
-                  dataKey="rpm"
-                  color="#ec4899"
-                  height={250}
-                />
-              </>
-            ) : (
-              <Card className="col-span-2">
-                <p className="text-muted-foreground text-center py-8">
-                  Start simulation to see live data trends
-                </p>
+        {/* Status Cards Grid */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ staggerChildren: 0.05 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"
+        >
+          {[
+            {
+              label: 'Battery State of Charge (SOC)',
+              value: store.data.batterySoc.toFixed(1),
+              unit: '%',
+              icon: '🔋',
+            },
+            {
+              label: 'Battery State of Health (SOH)',
+              value: store.data.batteryHealth.toFixed(1),
+              unit: '%',
+              icon: '💪',
+            },
+            {
+              label: 'Battery Temperature',
+              value: store.data.batteryTemperature.toFixed(1),
+              unit: '°C',
+              icon: '🌡️',
+            },
+            {
+              label: 'Motor Speed',
+              value: store.data.motorSpeed.toFixed(0),
+              unit: 'RPM',
+              icon: '⚙️',
+            },
+            {
+              label: 'Motor Temperature',
+              value: store.data.motorTemperature.toFixed(1),
+              unit: '°C',
+              icon: '🔥',
+            },
+            {
+              label: 'Vehicle Speed',
+              value: store.data.vehicleSpeed.toFixed(1),
+              unit: 'km/h',
+              icon: '🚗',
+            },
+            {
+              label: 'Throttle Position',
+              value: store.data.throttlePosition.toFixed(1),
+              unit: '%',
+              icon: '👉',
+            },
+            {
+              label: 'Brake Position',
+              value: store.data.brakePosition.toFixed(1),
+              unit: '%',
+              icon: '🛑',
+            },
+            {
+              label: 'Charging Status',
+              value: store.data.chargingStatus,
+              unit: '',
+              icon: '⚡',
+            },
+          ].map((item, idx) => (
+            <motion.div
+              key={item.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05 }}
+            >
+              <Card>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs text-muted-foreground mb-2">{item.label}</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {item.value}
+                      {item.unit && <span className="text-sm ml-1 text-muted-foreground">{item.unit}</span>}
+                    </p>
+                  </div>
+                  <span className="text-2xl">{item.icon}</span>
+                </div>
               </Card>
-            )}
-          </div>
-        </div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* System Status Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
+        >
+          <Card>
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">System Status</p>
+              <p className={`text-3xl font-bold ${getStatusColor(store.data.systemStatus)}`}>
+                {store.data.systemStatus}
+              </p>
+            </div>
+          </Card>
+          <Card>
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Active Fault</p>
+              <p className="text-2xl font-bold text-foreground">
+                {store.data.faultStatus || 'None'}
+              </p>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Live Trend Charts */}
+        {chartData.length > 1 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <h2 className="text-2xl font-bold text-foreground mb-6">Live Data Trends</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ChartCard
+                title="Battery State of Charge (%)"
+                data={chartData}
+                dataKey="batterySoc"
+                color="#22c55e"
+                height={250}
+              />
+              <ChartCard
+                title="Motor Temperature (°C)"
+                data={chartData}
+                dataKey="motorTemp"
+                color="#f59e0b"
+                height={250}
+              />
+              <ChartCard
+                title="Motor Speed (RPM)"
+                data={chartData}
+                dataKey="motorSpeed"
+                color="#3b82f6"
+                height={250}
+              />
+              <ChartCard
+                title="Battery Temperature (°C)"
+                data={chartData}
+                dataKey="batteryTemp"
+                color="#ef4444"
+                height={250}
+              />
+            </div>
+          </motion.div>
+        )}
+
+        {chartData.length === 0 && (
+          <Card>
+            <p className="text-muted-foreground text-center py-12">
+              Start the simulation to see live data and trends
+            </p>
+          </Card>
+        )}
       </div>
     </div>
   );

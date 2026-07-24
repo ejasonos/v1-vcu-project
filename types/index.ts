@@ -1,70 +1,10 @@
-export type HealthStatus = 'Healthy' | 'Attention Required' | 'Maintenance Soon' | 'Critical Failure Risk';
+export type SystemStatus = 'Normal' | 'Warning' | 'Fault';
 
-export type AnnunciatorState = 'off' | 'warning' | 'critical' | 'inactive';
+export type FailureMode = 'Normal' | 'HighTemperature' | 'LowBattery' | 'HighCurrent' | 'SensorFault';
 
-export type AlertLevel = 'normal' | 'warning' | 'critical';
+export type BatteryState = 'Healthy' | 'Low' | 'Critical';
 
-export interface ThrottleConfiguration {
-  numberOfThrottlePots: number;
-  minimumSignalLevel1: number;
-  maximumSignalLevel1: number;
-  minimumSignalLevel2: number;
-  maximumSignalLevel2: number;
-  creepLevel: number;
-  throttleType: string;
-  pedalPositionRegenMaximum: number;
-  pedalPositionRegenMinimum: number;
-  pedalPositionForwardMotionStart: number;
-  pedalPosition50ThrottlePercent: number;
-  minimumThrottleRange: number;
-  maximumThrottleRange: number;
-}
-
-export interface BrakeConfiguration {
-  minimumSignalLevel: number;
-  maximumSignalLevel: number;
-  minimumBrakeRegen: number;
-  maximumBrakeRegen: number;
-}
-
-export interface MotorControlConfiguration {
-  maximumSpeed: number;
-  maximumTorque: number;
-}
-
-export interface SystemConfiguration {
-  logLevel: string;
-  batteryVoltage: number;
-  prechargrelayOutput: number;
-  prechargeDelay: number;
-  coolingFanRelayOutput: number;
-  mainContactorRelayOutput: number;
-  coolingFanONTemperature: number;
-  coolingFanOFFTemperature: number;
-  brakeLightOutput: number;
-}
-
-export interface Alert {
-  id: string;
-  timestamp: number;
-  message: string;
-  level: AlertLevel;
-  confidence: number;
-  recommendedAction?: string;
-  estimatedTimeRemaining?: number;
-}
-
-export interface HealthMetric {
-  timestamp: number;
-  motorTemp: number;
-  inverterTemp: number;
-  voltage: number;
-  current: number;
-  torque: number;
-  power: number;
-  throttle: number;
-  rpm: number;
-}
+export type VehicleMode = 'Idle' | 'Running' | 'Charging';
 
 export interface ChatMessage {
   id: string;
@@ -73,31 +13,33 @@ export interface ChatMessage {
   timestamp: number;
 }
 
-export interface PredictionResult {
-  healthScore: number;
-  healthStatus: HealthStatus;
-  alerts: Alert[];
-  possibleFault?: string;
-  confidence: number;
-  recommendedAction?: string;
-  estimatedRemainingTime?: number;
+export interface SimulationSettings {
+  speed: 'Slow' | 'Normal' | 'Fast';
+  batteryDrainRate: 'Low' | 'Medium' | 'High';
+  temperatureIncreaseRate: 'Slow' | 'Normal' | 'Fast';
 }
 
-export interface Annunciators {
-  prechargRelay: AnnunciatorState;
-  mainContactor: AnnunciatorState;
-  running: AnnunciatorState;
-  reverse: AnnunciatorState;
-  motorOvertemperature: AnnunciatorState;
-  throttleFault: AnnunciatorState;
-  brakeFault: AnnunciatorState;
-  inverterFault: AnnunciatorState;
-  batteryLow: AnnunciatorState;
-  coolingFanActive: AnnunciatorState;
-  emergencyStop: AnnunciatorState;
-  communicationFault: AnnunciatorState;
-  canBusFault: AnnunciatorState;
-  highVoltageActive: AnnunciatorState;
-  lowVoltageFault: AnnunciatorState;
-  controllerReady: AnnunciatorState;
+export interface SimulationMetric {
+  timestamp: number;
+  batterySoc: number;
+  batteryTemperature: number;
+  motorSpeed: number;
+  motorTemperature: number;
+  throttlePosition: number;
+  brakePosition: number;
+  vehicleSpeed: number;
+}
+
+export interface SimulationData {
+  batterySoc: number; // 0-100%
+  batteryHealth: number; // 0-100%
+  batteryTemperature: number; // °C
+  motorSpeed: number; // RPM
+  motorTemperature: number; // °C
+  throttlePosition: number; // 0-100%
+  brakePosition: number; // 0-100%
+  vehicleSpeed: number; // km/h
+  chargingStatus: 'Not Charging' | 'Charging' | 'Discharging';
+  faultStatus: string | null;
+  systemStatus: SystemStatus;
 }
