@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useVCUStore } from '@/store/vcu-store';
+import { generateAIResponse } from '@/lib/ai-assistant';
 import { Card } from '@/components/ui/Card';
 import { motion } from 'framer-motion';
 import { Send } from 'lucide-react';
@@ -22,22 +23,83 @@ export default function AIAssistantPage() {
     scrollToBottom();
   }, [store.chatHistory]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!userInput.trim()) return;
+    const trimmedInput = userInput.trim();
+    if (!trimmedInput) return;
 
-    // Add user message
     const userMsg = {
       id: `msg-${Date.now()}-user`,
       role: 'user' as const,
-      content: userInput,
+      content: trimmedInput,
       timestamp: Date.now(),
     };
 
     store.addChatMessage(userMsg);
     setUserInput('');
     setIsLoading(true);
+
+    try {
+      const assistantContext = {
+        simulationRunning: store.simulationRunning,
+        failureMode: store.failureMode,
+        userThrottle: store.userThrottle,
+        userBrake: store.userBrake,
+        simulationSettings: store.simulationSettings,
+        data: store.data,
+        metrics: store.metrics,
+        chatHistory: store.chatHistory,
+        motorRunning: store.motorRunning,
+        faulted: store.faulted,
+        connected: store.connected,
+        operatingTime: store.operatingTime,
+        motorTemperature: store.motorTemperature,
+        requestedTorque: store.requestedTorque,
+        actualTorque: store.actualTorque,
+        dcVoltage: store.dcVoltage,
+        dcCurrent: store.dcCurrent,
+        power: store.power,
+        throttleLevel: store.throttleLevel,
+        brakeLevel: store.brakeLevel,
+        inverterTemperature: store.inverterTemperature,
+        rpm: store.rpm,
+        batteryVoltage: store.batteryVoltage,
+        maximumSpeed: store.maximumSpeed,
+        maximumTorque: store.maximumTorque,
+        coolingFanState: store.coolingFanState,
+        mainContactorState: store.mainContactorState,
+        prechargeRelayState: store.prechargeRelayState,
+        annunciators: store.annunciators,
+        logLevel: store.logLevel,
+        throttleConfiguration: store.throttleConfiguration,
+        brakeConfiguration: store.brakeConfiguration,
+        healthScore: store.healthScore,
+        healthStatus: store.healthStatus,
+        prediction: store.prediction,
+        warnings: store.warnings,
+      };
+
+      const response = await generateAIResponse(trimmedInput, assistantContext);
+      const aiMsg = {
+        id: `msg-${Date.now()}-ai`,
+        role: 'assistant' as const,
+        content: response || 'I could not generate a reply right now.',
+        timestamp: Date.now(),
+      };
+
+      store.addChatMessage(aiMsg);
+    } catch (error) {
+      const fallbackMessage = {
+        id: `msg-${Date.now()}-ai`,
+        role: 'assistant' as const,
+        content: 'The assistant service is unavailable right now. Please try again in a moment.',
+        timestamp: Date.now(),
+      };
+      store.addChatMessage(fallbackMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

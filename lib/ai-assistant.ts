@@ -1,18 +1,13 @@
 "use server"
 
 import type { VCUState } from '@/store/vcu-store';
-import OpenAI from 'openai'
+import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-  baseURL: process.env.NEXT_PUBLIC_OPENAI_BASE_URL
-})
-const messages: { role: 'system' | 'user', content: string }[] = [
-  { role: 'system', content: 'You are a STRICTLY a helpful assistant that provides information about the Electric Vehicle Control Unit (VCU) based on the provided state data. Answer all questions using Markdown format only. Use headings, bullet lists, bold text, inline code, and short paragraphs. Do not output HTML. You do not ever offer any assistant of any sort apart from providing VCU information. If user asks for anything else, politely decline.' }
-]
+type AssistantState = Partial<VCUState> & Record<string, unknown>;
 
-function buildVCUStateContext(vcuState: Partial<VCUState> & Record<string, unknown>): string {
-  const simulationData = (vcuState as any).data ?? vcuState;
+function buildVCUStateContext(vcuState: AssistantState): string {
+  const simulationData = (vcuState as Record<string, unknown>).data ?? vcuState;
+  const data = simulationData as Record<string, unknown>;
 
   const stateSummary = {
     simulationRunning: vcuState.simulationRunning,
@@ -21,34 +16,34 @@ function buildVCUStateContext(vcuState: Partial<VCUState> & Record<string, unkno
     userBrake: vcuState.userBrake,
     simulationSettings: vcuState.simulationSettings,
     simulationData: {
-      batterySoc: simulationData.batterySoc,
-      batteryHealth: simulationData.batteryHealth,
-      batteryTemperature: simulationData.batteryTemperature,
-      motorSpeed: simulationData.motorSpeed,
-      motorTemperature: simulationData.motorTemperature,
-      throttlePosition: simulationData.throttlePosition,
-      brakePosition: simulationData.brakePosition,
-      vehicleSpeed: simulationData.vehicleSpeed,
-      chargingStatus: simulationData.chargingStatus,
-      faultStatus: simulationData.faultStatus,
-      systemStatus: simulationData.systemStatus,
+      batterySoc: data.batterySoc,
+      batteryHealth: data.batteryHealth,
+      batteryTemperature: data.batteryTemperature,
+      motorSpeed: data.motorSpeed,
+      motorTemperature: data.motorTemperature,
+      throttlePosition: data.throttlePosition,
+      brakePosition: data.brakePosition,
+      vehicleSpeed: data.vehicleSpeed,
+      chargingStatus: data.chargingStatus,
+      faultStatus: data.faultStatus,
+      systemStatus: data.systemStatus,
     },
     motorRunning: vcuState.motorRunning,
     faulted: vcuState.faulted,
     connected: vcuState.connected,
     operatingTime: vcuState.operatingTime,
-    motorTemperature: vcuState.motorTemperature ?? simulationData.motorTemperature,
+    motorTemperature: vcuState.motorTemperature ?? data.motorTemperature,
     inverterTemperature: vcuState.inverterTemperature,
     requestedTorque: vcuState.requestedTorque,
     actualTorque: vcuState.actualTorque,
     maximumTorque: vcuState.maximumTorque,
     dcVoltage: vcuState.dcVoltage,
-    batteryVoltage: vcuState.batteryVoltage ?? simulationData.batteryVoltage,
+    batteryVoltage: vcuState.batteryVoltage ?? data.batteryVoltage,
     dcCurrent: vcuState.dcCurrent,
     power: vcuState.power,
-    throttleLevel: vcuState.throttleLevel ?? simulationData.throttlePosition,
-    brakeLevel: vcuState.brakeLevel ?? simulationData.brakePosition,
-    rpm: vcuState.rpm ?? simulationData.motorSpeed,
+    throttleLevel: vcuState.throttleLevel ?? data.throttlePosition,
+    brakeLevel: vcuState.brakeLevel ?? data.brakePosition,
+    rpm: vcuState.rpm ?? data.motorSpeed,
     maximumSpeed: vcuState.maximumSpeed,
     coolingFanState: vcuState.coolingFanState,
     mainContactorState: vcuState.mainContactorState,
@@ -59,8 +54,54 @@ function buildVCUStateContext(vcuState: Partial<VCUState> & Record<string, unkno
     healthStatus: vcuState.healthStatus,
     prediction: vcuState.prediction,
     chatHistory: vcuState.chatHistory,
+  };
+
+  return `VCU state summary:\n${JSON.stringify(stateSummary, null, 2)}`;
+}
+
+const openai = new OpenAI({
+  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+  baseURL: process.env.NEXT_PUBLIC_OPENAI_BASE_URL,
+});
+
+export async function generateAIResponse(userMessage: string, vcuState: AssistantState): Promise<string> {
+  const prompt = userMessage.trim();
+  if (!prompt) {
+    return 'Please ask a question about the vehicle system.';
   }
 
-  return `VCU state summary:\n${JSON.stringify(stateSummary, null, 2)}`
+  const stateContext = buildVCUStateContext(vcuState);
+  const messages = [
+    {
+      role: 'system' as const,
+      content:
+        'You are a concise EV control-unit assistant. Answer using markdown and only use the provided VCU state data.',
+    },
+    {
+      role: 'system' as const,
+      content: stateContext,
+    },
+    {
+      role: 'user' as const,
+      content: prompt,
+    },
+  ];
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'meta/llama-3.1-8b-instruct',
+      messages,
+      temperature: 0.2,
+    });
+
+    const content = response.choices?.[0]?.message?.content?.trim();
+    if (content) {
+      return content;
+    }
+  } catch (error) {
+    console.error('OpenAI request failed', error);
+  }
+
+  return 'The assistant service could not return a response right now. Please try again.';
 }
 
