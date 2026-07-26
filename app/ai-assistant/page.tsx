@@ -6,6 +6,7 @@ import { generateAIResponse } from '@/lib/ai-assistant';
 import { Card } from '@/components/ui/Card';
 import { motion } from 'framer-motion';
 import { Send } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 export default function AIAssistantPage() {
   const store = useVCUStore();
@@ -144,7 +145,43 @@ export default function AIAssistantPage() {
                         }`}
                       >
                         <div className="text-sm break-words">
-                          <p className="whitespace-pre-wrap">{typeof msg.content === 'string' ? msg.content : 'Unable to render message.'}</p>
+                          {msg.role === 'assistant' ? (
+                            <div className="space-y-2">
+                              <ReactMarkdown
+                                skipHtml
+                                components={{
+                                  p: ({ children }) => <p className="whitespace-pre-wrap leading-relaxed">{children}</p>,
+                                  ul: ({ children }) => <ul className="list-disc pl-5 space-y-1">{children}</ul>,
+                                  ol: ({ children }) => <ol className="list-decimal pl-5 space-y-1">{children}</ol>,
+                                  li: ({ children }) => <li>{children}</li>,
+                                  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                                  code: ({ children, className, ...props }) => {
+                                    const isInline = !className;
+                                    return isInline ? (
+                                      <code className="rounded bg-muted/60 px-1.5 py-0.5 font-mono text-xs" {...props}>
+                                        {children}
+                                      </code>
+                                    ) : (
+                                      <pre className="overflow-x-auto rounded bg-muted/60 p-2">
+                                        <code className={className} {...props}>
+                                          {children}
+                                        </code>
+                                      </pre>
+                                    );
+                                  },
+                                  a: ({ children, href }) => (
+                                    <a href={href} className="text-accent underline" target="_blank" rel="noreferrer">
+                                      {children}
+                                    </a>
+                                  ),
+                                }}
+                              >
+                                {typeof msg.content === 'string' ? msg.content : 'Unable to render message.'}
+                              </ReactMarkdown>
+                            </div>
+                          ) : (
+                            <p className="whitespace-pre-wrap">{typeof msg.content === 'string' ? msg.content : 'Unable to render message.'}</p>
+                          )}
                         </div>
                         <p className="text-xs opacity-70 mt-2">
                           {new Date(msg.timestamp).toLocaleTimeString([], {

@@ -75,7 +75,7 @@ export async function generateAIResponse(userMessage: string, vcuState: Assistan
     {
       role: 'system' as const,
       content:
-        'You are a concise EV control-unit assistant. Answer using markdown and only use the provided VCU state data.',
+        'You are a concise EV control-unit assistant. Answer using markdown and only use the provided VCU state data. You may respond with a McKinsey-grade report given the context.',
     },
     {
       role: 'system' as const,
