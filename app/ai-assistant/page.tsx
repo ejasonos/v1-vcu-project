@@ -2,10 +2,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useVCUStore } from '@/store/vcu-store';
-import { generateAIResponse } from '@/lib/ai-assistant';
 import { Card } from '@/components/ui/Card';
 import { motion } from 'framer-motion';
 import { Send } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function AIAssistantPage() {
   const store = useVCUStore();
@@ -37,19 +38,6 @@ export default function AIAssistantPage() {
     store.addChatMessage(userMsg);
     setUserInput('');
     setIsLoading(true);
-
-    // Generate AI response using the simulation data context
-    setTimeout(() => {
-      const response = generateAIResponse(userInput, store.data);
-      const aiMsg = {
-        id: `msg-${Date.now()}-ai`,
-        role: 'assistant' as const,
-        content: response,
-        timestamp: Date.now(),
-      };
-      store.addChatMessage(aiMsg);
-      setIsLoading(false);
-    }, 600);
   };
 
   return (
@@ -95,7 +83,15 @@ export default function AIAssistantPage() {
                             : 'bg-card text-foreground border border-border'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                        <div className="text-sm break-words">
+                          {msg.role === 'assistant' ? (
+                            <div className="prose prose-sm max-w-none dark:prose-invert [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_strong]:font-semibold [&_code]:rounded [&_code]:bg-muted/60 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-muted/60 [&_pre]:p-2">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                            </div>
+                          ) : (
+                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                          )}
+                        </div>
                         <p className="text-xs opacity-70 mt-2">
                           {new Date(msg.timestamp).toLocaleTimeString([], {
                             hour: '2-digit',
