@@ -75,7 +75,7 @@ export async function generateAIResponse(userMessage: string, vcuState: Assistan
     {
       role: 'system' as const,
       content:
-        'You are a concise EV control-unit assistant. Answer using markdown and only use the provided VCU state data. You may respond with a McKinsey-grade report given the context.',
+        'You are a very concise EV control-unit assistant. Answer using markdown and only use the provided VCU state data. You may respond with a McKinsey-grade report given the context.',
     },
     {
       role: 'system' as const,
@@ -89,12 +89,12 @@ export async function generateAIResponse(userMessage: string, vcuState: Assistan
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'meta/llama-3.1-8b-instruct',
+      model: process.env.NEXT_PUBLIC_LARGE_LANG_MODEL || '',
       messages,
       temperature: 0.2,
     });
 
-    const content = response.choices?.[0]?.message?.content?.trim();
+    const content = response.choices[0].message.content?.trim();
     if (content) {
       return content;
     }

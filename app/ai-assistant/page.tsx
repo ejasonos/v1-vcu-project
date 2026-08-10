@@ -144,7 +144,7 @@ export default function AIAssistantPage() {
                             : 'bg-card text-foreground border border-border'
                         }`}
                       >
-                        <div className="text-sm break-words">
+                        <div className="text-sm break-words max-h-[500px] overflow-auto">
                           {msg.role === 'assistant' ? (
                             <div className="space-y-2">
                               <ReactMarkdown
