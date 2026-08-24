@@ -94,8 +94,9 @@ export function simulateVCUUpdate(currentData: SimulationData): SimulationData {
   const batteryTempDecrease = 0.02;
   newData.batteryTemperature = Math.max(20, currentData.batteryTemperature + batteryTempIncrease - batteryTempDecrease) + (Math.random() - 0.5) * 0.3;
 
-  // Battery health degrades slowly
-  newData.batteryHealth = Math.max(0, currentData.batteryHealth - 0.001);
+  // Battery health degrades with use and more quickly during a current fault.
+  const healthDegradation = 0.01 + loadFactor * 0.02 + (simState.failureMode === 'HighCurrent' ? 0.05 : 0);
+  newData.batteryHealth = Math.max(0, currentData.batteryHealth - healthDegradation);
 
   // Determine system status based on conditions
   let systemStatus = 'Normal' as const;
@@ -103,13 +104,13 @@ export function simulateVCUUpdate(currentData: SimulationData): SimulationData {
 
   // Apply failure modes
   if (simState.failureMode === 'HighTemperature') {
-    newData.motorTemperature = Math.min(150, newData.motorTemperature + 2);
+    newData.motorTemperature = Math.max(125, newData.motorTemperature);
     systemStatus = 'Warning';
     faultStatus = 'High Motor Temperature';
   }
 
   if (simState.failureMode === 'LowBattery') {
-    newData.batterySoc = Math.max(0, newData.batterySoc - 2);
+    newData.batterySoc = Math.min(15, Math.max(0, newData.batterySoc - 2));
     if (newData.batterySoc < 20) {
       systemStatus = 'Fault';
       faultStatus = 'Battery Critically Low';

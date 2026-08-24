@@ -234,6 +234,10 @@ export function calculateHealthScore(state: Partial<VCUState>): HealthEvaluation
     activeFaults++;
   }
 
+  // Battery state of health is part of the overall system health.
+  const batteryHealth = state.data?.batteryHealth ?? 100;
+  healthScore -= Math.max(0, 100 - batteryHealth);
+
   // Multiple simultaneous faults
   if (activeFaults >= 3) {
     healthScore -= 10;

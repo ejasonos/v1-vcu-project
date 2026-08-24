@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useVCUStore } from '@/store/vcu-store';
 import { generateAIResponse } from '@/lib/ai-assistant';
+import { calculateHealthScore } from '@/lib/health-score';
 import { Card } from '@/components/ui/Card';
 import { motion } from 'framer-motion';
 import { Send } from 'lucide-react';
@@ -40,6 +41,7 @@ export default function AIAssistantPage() {
     setIsLoading(true);
 
     try {
+      const healthEval = calculateHealthScore(store);
       const assistantContext = {
         simulationRunning: store.simulationRunning,
         failureMode: store.failureMode,
@@ -73,8 +75,8 @@ export default function AIAssistantPage() {
         logLevel: store.logLevel,
         throttleConfiguration: store.throttleConfiguration,
         brakeConfiguration: store.brakeConfiguration,
-        healthScore: store.healthScore,
-        healthStatus: store.healthStatus,
+        healthScore: healthEval.healthScore,
+        healthStatus: healthEval.healthStatus,
         prediction: store.prediction,
         warnings: store.warnings,
       };

@@ -237,14 +237,34 @@ export const useVCUStore = create<VCUState>((set) => ({
     }),
 
   updateSimulationData: (data) =>
-    set((state) => ({
-      data: { ...state.data, ...data },
-      motorTemperature: data.motorTemperature ?? state.motorTemperature,
-      throttleLevel: data.throttlePosition ?? state.throttleLevel,
-      brakeLevel: data.brakePosition ?? state.brakeLevel,
-      rpm: data.motorSpeed ?? state.rpm,
-      inverterTemperature: state.inverterTemperature,
-    })),
+    set((state) => {
+      const nextData = { ...state.data, ...data };
+      const throttleLevel = nextData.throttlePosition;
+      const isHighTemperature = state.failureMode === 'HighTemperature';
+      const isLowBattery = state.failureMode === 'LowBattery';
+      const isHighCurrent = state.failureMode === 'HighCurrent';
+      const isSensorFault = state.failureMode === 'SensorFault';
+      const dcVoltage = isLowBattery ? 280 : 400;
+      const dcCurrent = isHighCurrent ? 550 : throttleLevel * 5;
+
+      return {
+        data: nextData,
+        motorTemperature: nextData.motorTemperature,
+        throttleLevel,
+        brakeLevel: nextData.brakePosition,
+        rpm: nextData.motorSpeed,
+        inverterTemperature: isHighTemperature ? 115 : Math.max(25, nextData.motorTemperature - 5),
+        dcVoltage,
+        batteryVoltage: dcVoltage,
+        dcCurrent,
+        power: (dcVoltage * dcCurrent) / 1000,
+        requestedTorque: (throttleLevel / 100) * 300,
+        actualTorque: isSensorFault ? 0 : (throttleLevel / 100) * 300,
+        connected: !isSensorFault,
+        faulted: nextData.systemStatus === 'Fault',
+        coolingFanState: isHighTemperature,
+      };
+    }),
 
   updateSimulationSettings: (settings) =>
     set((state) => ({
